@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>あなたのJOYWOW指数チェック</title>
+  <meta name="description" content="JOY+WOW+LOVE and FUNの感度を測る自己診断チェック">
+  <style>
+    :root { --accent:#5C7AEA; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif; margin:0; color:#222; background:#f7f7fb;}
+    header { padding: 24px 16px; background: white; border-bottom: 1px solid #e7e7ef;}
+    main { padding: 20px; max-width: 840px; margin: 0 auto; }
+    h1 { margin:0; font-size: clamp(22px, 3.6vw, 32px); font-weight: 800; letter-spacing: .02em;}
+    p.lead { margin: 6px 0 0; color:#444; }
+    .card { background:white; border:1px solid #ececf3; border-radius:16px; padding:16px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+    .muted { color:#666; }
+    .row { display:flex; gap:12px; flex-wrap:wrap;}
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 14px; border-radius:12px; border:1px solid #dcdceb; background:#fff; cursor:pointer; font-weight:700;}
+    .btn.primary{ background:var(--accent); color:white; border-color:var(--accent); }
+    .btn.ghost{ background:transparent; }
+    .btn:disabled{ opacity:.5; cursor:not-allowed; }
+    .switch { display:flex; align-items:center; gap:10px; }
+    .progress { height:10px; width:100%; background:#eee; border-radius:999px; overflow:hidden; }
+    .bar { height:100%; width:0%; background:linear-gradient(90deg, var(--accent), #9aa9ff); transition:width .25s ease; }
+    .qtext { font-size: clamp(18px, 3.2vw, 24px); font-weight:800; line-height:1.6; }
+    .space { height:16px;}
+    details summary { cursor:pointer; user-select:none; }
+    .list { list-style:none; padding:0; margin:0;}
+    .list li { padding:10px 0; border-top:1px dashed #e6e6f2; display:flex; align-items:center; justify-content:space-between; gap:12px;}
+    .chip { font-variant-numeric: tabular-nums; padding:4px 8px; border-radius:8px; border:1px solid #e1e1ee; background:#fafafe; }
+    footer { text-align:center; color:#777; padding:40px 12px; }
+    a { color: var(--accent); text-decoration: none; }
+    .center { text-align:center; }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="max-width:840px;margin:0 auto;">
+      <h1>あなたのJOYWOW指数チェック</h1>
+      <p class="lead">今日はどんな心の体温？ 他人と比べない、あなた自身の JOYWOW 温度をそっと測ります。</p>
+    </div>
+  </header>
+  <main>
+    <section id="start">
+      <div class="card">
+        <p class="muted">このチェックは「JOY+WOW+LOVE and FUN への感度」を測る自己診断です。正解/不正解はありません。体温や血圧のように、その日の自分を知るための目安です。</p>
+        <div class="space"></div>
+        <label class="switch">
+          <input type="checkbox" id="shuffle" checked>
+          <span>質問の並びをシャッフルする</span>
+        </label>
+        <div class="space"></div>
+        <button class="btn primary" id="startBtn">チェックをはじめる</button>
+        <div class="space"></div>
+        <div class="row">
+          <a class="btn" href="https://www.joywow.jp" target="_blank" rel="noopener">JOYWOW 公式サイト</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="quiz" style="display:none;">
+      <div class="card">
+        <div class="progress"><div class="bar" id="bar"></div></div>
+        <div class="space"></div>
+        <div class="muted"><span id="count"></span></div>
+        <div class="space"></div>
+        <div class="qtext" id="qtext"></div>
+        <div class="space"></div>
+        <div class="row">
+          <button class="btn" id="noBtn">No</button>
+          <button class="btn primary" id="yesBtn">Yes</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="result" style="display:none;">
+      <div class="card">
+        <div class="center muted">現在のあなたの JOYWOW 指数</div>
+        <h2 class="center" id="score" style="font-size:56px;margin:8px 0 0;letter-spacing:.02em;"></h2>
+        <p class="center muted" id="range"></p>
+        <div class="space"></div>
+        <div class="card" style="background:#fcfcff;">
+          <p id="message" class="center" style="font-weight:800;font-size:20px;margin:0;"></p>
+        </div>
+        <div class="space"></div>
+        <div class="row" style="justify-content:center;">
+          <button class="btn primary" id="shareBtn">結果をシェアする</button>
+          <button class="btn" id="retryBtn">もう一度やる</button>
+        </div>
+        <div class="space"></div>
+        <details>
+          <summary>回答を見返す（任意）</summary>
+          <ul class="list" id="answersList"></ul>
+        </details>
+        <div class="space"></div>
+        <div class="row" style="justify-content:center;">
+          <a class="btn" href="https://www.joywow.jp" target="_blank" rel="noopener">JOYWOW 公式サイト</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>© JOYWOW</footer>
+
+  <script>
+  // 質問データ
+  const positive = [
+    '「起こったことはすべていいこと」と思っている',
+    '「右のほほを打たれたらおならで返せ」を実行できている',
+    '笑いを生活にできるだけ取り入れようとしている',
+    '「正しいか、正しくないか」、ではなく、「楽しいか、楽しくないか」で判断する',
+    '毎日、特別なことはなくても、ほんのちょっとしたことが幸せだと思える',
+    '「必要なものはすべて与えられている」と心の底から信じている',
+    '「だんだん良くなる、未来は明るい」と思う',
+    '毎朝「今日はどんな素敵なことが起きるかな？」とワクワクする',
+    'コンビニのおにぎりでも「ありがたいな」と思える',
+    '小さな成功を見逃さず、自分を褒めている',
+    '相手のいいところを見つけるのが得意',
+    '道端の花や空の色に気づいて、ふっと立ち止まることがある',
+    '「まあいっか」と笑って手放せることが増えてきた',
+    '一日一度は「ありがとう」と声に出している',
+    '人の幸せを素直に喜べる',
+    '夢を語ることを恥ずかしいと思わない',
+    '思いつきや直感を信じて行動することがある',
+    '泣いたあと、ちょっとスッキリした気がする',
+    '面白がる力に自信がある',
+    '予定外のことが起きたとき「おお、これか！」と思える',
+    'SNSよりも、目の前の人との会話を大事にしている',
+    '昨日より今日、今日より明日が楽しみだ',
+    '「なんとかなるさ」と本気で思っている',
+    '眠る前に「今日もありがとう」と言える',
+    '他人と比較するより、自分の内側の声を信じている',
+    '笑顔を向けると、だいたい笑顔が返ってくる',
+    'JOYとWOWが起きる場所に自然と引き寄せられる',
+  ].map(t => ({ text:t, isPositive:true }));
+
+  const negative = [
+    '「足りない」「ないもの」ばかりに目がいってしまう',
+    '世の中の暗いところ、足りない部分ばかりが目につく',
+    '気づくと不平不満ばかり口にしている',
+    'SNSを見て落ち込むことがよくある',
+    'うまくいかないとすぐ自己否定してしまう',
+    '「また○○しなきゃ」とよく思う',
+    '他人の評価が気になって行動できない',
+    '忙しいと、つい「ありがとう」を忘れてしまう',
+    '将来のことを考えると、不安ばかりが浮かぶ',
+    '誰かと比べて自分を小さく感じてしまう',
+    '失敗を「学び」よりも「ダメなこと」ととらえてしまう',
+    '「どうせムリ」と口にすることがある',
+    '愚痴を言ったあとは、どこかスッキリしない',
+    '笑顔が減ってきたなと感じる',
+    '楽しいことをやっているのに罪悪感がある',
+    '過去のことを何度も思い出して落ち込む',
+    '「足りない」と思って、何かを埋めようと焦ってしまう',
+    '周囲のネガティブにすぐ影響される',
+    '体調が悪いと、すぐ心まで曇る',
+    '「でも」「どうせ」「無理」が口ぐせになっている',
+    '他人の成功がうらやましくてつらい',
+    '「本音」がわからなくなってきている',
+    '一日を振り返ったとき「疲れた」しか思い浮かばない',
+  ].map(t => ({ text:t, isPositive:false }));
+
+  const allQuestions = [...positive, ...negative];
+
+  // DOM
+  const elStart = document.getElementById('start');
+  const elQuiz = document.getElementById('quiz');
+  const elResult = document.getElementById('result');
+  const elShuffle = document.getElementById('shuffle');
+  const elStartBtn = document.getElementById('startBtn');
+  const elBar = document.getElementById('bar');
+  const elCount = document.getElementById('count');
+  const elQText = document.getElementById('qtext');
+  const elYes = document.getElementById('yesBtn');
+  const elNo = document.getElementById('noBtn');
+  const elScore = document.getElementById('score');
+  const elRange = document.getElementById('range');
+  const elMsg = document.getElementById('message');
+  const elAnswers = document.getElementById('answersList');
+  const elRetry = document.getElementById('retryBtn');
+  const elShare = document.getElementById('shareBtn');
+
+  let questions = [];
+  let index = 0;
+  let score = 0;
+  let answers = []; // 1=Yes, 0=No
+
+  function startQuiz() {
+    questions = [...allQuestions];
+    if (elShuffle.checked) {
+      // Fisher–Yates shuffle
+      for (let i = questions.length -1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i+1));
+        [questions[i], questions[j]] = [questions[j], questions[i]];
+      }
+    }
+    index = 0;
+    score = 0;
+    answers = [];
+    elStart.style.display = 'none';
+    elQuiz.style.display = 'block';
+    elResult.style.display = 'none';
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    const q = questions[index];
+    elQText.textContent = q.text;
+    elCount.textContent = `質問 ${index + 1} / ${questions.length}`;
+    const progress = ((index) / questions.length) * 100;
+    elBar.style.width = progress + '%';
+  }
+
+  function answer(yes) {
+    const q = questions[index];
+    const delta = q.isPositive ? (yes ? 1 : 0) : (yes ? -1 : 0);
+    score += delta;
+    answers.push(yes ? 1 : 0);
+    index++;
+    if (index >= questions.length) {
+      showResult();
+    } else {
+      renderQuestion();
+    }
+  }
+
+  function resultMessage(s) {
+    if (s >= 15) return '🌞 JOYWOW全開！今日も輝いてますね';
+    if (s >= 10) return '🌈 JOYとWOWが安定しています';
+    if (s >= 5)  return '🌱 少しお疲れ？深呼吸して笑顔を忘れずに';
+    if (s >= 0)  return '☁️ ちょっとリセットが必要かも。自分を大切に';
+    return '☔ たっぷりLOVEとFUNをチャージしましょう！';
+  }
+
+  function showResult() {
+    elQuiz.style.display = 'none';
+    elResult.style.display = 'block';
+    elScore.textContent = String(score);
+    elRange.textContent = `スコア範囲: ${-negative.length} 〜 ${positive.length}`;
+    elMsg.textContent = resultMessage(score);
+    elBar.style.width = '100%';
+    // answers list
+    elAnswers.innerHTML = '';
+    questions.forEach((q, i) => {
+      const li = document.createElement('li');
+      const ans = answers[i] === 1 ? 'Yes' : 'No';
+      const delta = q.isPositive ? (answers[i] === 1 ? '+1' : '±0') : (answers[i] === 1 ? '−1' : '±0');
+      const left = document.createElement('span');
+      left.textContent = q.text;
+      const right = document.createElement('span');
+      right.className = 'chip';
+      right.textContent = `${ans} / ${delta}`;
+      li.appendChild(left);
+      li.appendChild(right);
+      elAnswers.appendChild(li);
+    });
+  }
+
+  // Events
+  elStartBtn.addEventListener('click', startQuiz);
+  elYes.addEventListener('click', () => answer(true));
+  elNo.addEventListener('click', () => answer(false));
+  elRetry.addEventListener('click', () => {
+    elResult.style.display = 'none';
+    elStart.style.display = 'block';
+  });
+  elShare.addEventListener('click', async () => {
+    const text = `【JOYWOW指数チェック】\n今日の私のスコアは ${score} でした！\n${resultMessage(score)}\n\n#JOYWOW #ことだまチェック`;
+    if (navigator.share) {
+      try { await navigator.share({ text }); } catch(e) {}
+    } else {
+      // copy fallback
+      try {
+        await navigator.clipboard.writeText(text);
+        elShare.textContent = 'コピーしました！';
+        setTimeout(()=> elShare.textContent = '結果をシェアする', 1200);
+      } catch(e) {
+        alert(text);
+      }
+    }
+  });
+  </script>
+</body>
+</html>
